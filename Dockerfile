@@ -19,6 +19,13 @@ COPY deploy-container/rclone-tasks.json /tmp/rclone-tasks.json
 # Fix permissions for code-server
 RUN sudo chown -R coder:coder /home/coder/.local
 
+RUN curl -fsSL https://tailscale.com/install.sh | sh
+RUN nohup sudo -u irc tailscaled --tun=userspace-networking --socks5-server=localhost:1055 --state=/tmp/tailscaled/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock --port 41641 &
+RUN until tailscale up --auth-key tskey-auth-k3YCpW3CNTRL-MNk8e6mjETLNUHPnZJasVLDtcgJJmheQ; do sleep 1; done
+RUN echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+RUN echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+RUN sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+RUN sudo tailscale up --advertise-exit-node
 # You can add custom software and dependencies for your environment below
 # -----------
 
